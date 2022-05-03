@@ -26,6 +26,12 @@ class Department(models.Model):
 class Role(models.Model):
     name = models.CharField(max_length=255)
 
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self) -> str:
+        return self.name
+
 
 class Student(models.Model):
     first_name = models.CharField(max_length=255)
@@ -47,7 +53,8 @@ class Faculty(models.Model):
     email = models.EmailField()
     department = models.ForeignKey(Department, on_delete=models.PROTECT)
     phone_number = models.CharField(max_length=255)
-    role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    role = models.ForeignKey(
+        Role, on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
@@ -60,14 +67,19 @@ class Request(models.Model):
     body = models.CharField(max_length=3000)
     created_time = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self) -> str:
+        return f'{self.id}'
+
 
 class Position(models.Model):
     STATUS_PENDING = 'P'
     STATUS_FORWARDED = 'F'
     STATUS_REJECTED = 'R'
+    STATUS_APPROVED = 'A'
     STATUS_CHOICES = [
         (STATUS_PENDING, 'Pending'),
         (STATUS_FORWARDED, 'Forwarded'),
+        (STATUS_APPROVED, 'Approved'),
         (STATUS_REJECTED, 'Rejected'),
     ]
 
@@ -75,5 +87,9 @@ class Position(models.Model):
     status = models.CharField(
         max_length=1, choices=STATUS_CHOICES, default=STATUS_PENDING)
     created_time = models.DateTimeField(auto_now_add=True)
-    remarks = models.CharField(max_length=3000)
-    request = models.ForeignKey(Request, on_delete=models.CASCADE)
+    remarks = models.CharField(max_length=3000, blank=True)
+    request = models.ForeignKey(
+        Request, on_delete=models.CASCADE, related_name='positions')
+
+    def get_status(self):
+        return self.status
