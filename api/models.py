@@ -103,8 +103,9 @@ class Position(models.Model):
 
 
 class CurrentPosition(models.Model):
-    request = models.OneToOneField(Request, on_delete=models.CASCADE)
+    request = models.OneToOneField(
+        Request, on_delete=models.CASCADE, related_name='current_position')
     position = models.OneToOneField(Position, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return self.request
+        return self.position

@@ -5,13 +5,21 @@ from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveMode
 from rest_framework.response import Response
 
 from .serializers import CreatePositionSerializer, CreateRequestSerializer, FacultyRequestSerializer, PositionSerializer, RequestForwardSerializer, RequestSerializer, RequestActionSerializer
-from .models import Faculty, Position, Request
+from .models import CurrentPosition, Faculty, Position, Request
 # Create your views here.
 
 
 class RequestViewSet(ModelViewSet):
-    queryset = Request.objects.select_related(
-        'issued_to', 'issued_by').prefetch_related('positions').all()
+    queryset = Request.objects \
+        .select_related(
+            'issued_to__department', 'issued_to__role', 'issued_to',
+            'issued_by', 'current_position__position__faculty__department',
+            'current_position__position__faculty__role'
+        ) \
+        .prefetch_related(
+            'positions__faculty__role', 'positions__faculty__department'
+        ) \
+        .all()
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -83,6 +91,9 @@ class RequestActionViewSet(CreateModelMixin, GenericViewSet):
             position = Position.objects.create(
                 faculty=faculty.get(), request_id=request_id)
 
+            CurrentPosition.objects.filter(request_id=request_id).update(
+                position=position)
+
             serializer = RequestForwardSerializer(position)
             return Response(serializer.data)
 
@@ -91,4 +102,20 @@ class FacultyRequestViewSet(ModelViewSet):
     serializer_class = FacultyRequestSerializer
 
     queryset = Position.objects.filter(faculty=1).select_related(
-        'request', 'request__issued_to', 'request__issued_by').prefetch_related('request__positions').order_by('-created_time').all()
+        'request', 'request__issued_to', 'request__issued_by') \
+        .prefetch_related('request__positions') \
+        .order_by('-created_time') \
+        .all()
+
+
+class StudentRequestViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
+    serializer_class = RequestSerializer
+
+    http_methods = ['get']
+
+    queryset = Request.objects.select_related(
+        'issued_to__department', 'issued_to__role', 'issued_to',
+        'issued_by', 'current_position__position__faculty__department',
+        'current_position__position__faculty__role') \
+        .prefetch_related('positions__faculty__role', 'positions__faculty__department') \
+        .all()

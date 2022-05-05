@@ -9,6 +9,8 @@ router = routers.DefaultRouter()
 router.register('requests', views.RequestViewSet, basename='requests')
 router.register('faculty/requests', views.FacultyRequestViewSet,
                 basename='faculty-requests')
+router.register('student/requests', views.StudentRequestViewSet,
+                basename='student-requests')
 # router.register('requests/<int:pk>/approve',
 #                 views.RequestApproveViewSet, basename='request-approve')
 
