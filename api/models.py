@@ -1,3 +1,4 @@
+from urllib import request
 from django.db import models
 
 # Create your models here.
@@ -46,6 +47,9 @@ class Student(models.Model):
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
 
+    def name(self) -> str:
+        return f'{self.first_name} {self.last_name}'
+
 
 class Faculty(models.Model):
     first_name = models.CharField(max_length=255)
@@ -55,6 +59,9 @@ class Faculty(models.Model):
     phone_number = models.CharField(max_length=255)
     role = models.ForeignKey(
         Role, on_delete=models.PROTECT, null=True, blank=True)
+
+    def name(self) -> str:
+        return f'{self.first_name} {self.last_name}'
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
@@ -93,3 +100,11 @@ class Position(models.Model):
 
     def get_status(self):
         return self.status
+
+
+class CurrentPosition(models.Model):
+    request = models.OneToOneField(Request, on_delete=models.CASCADE)
+    position = models.OneToOneField(Position, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return self.request

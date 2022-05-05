@@ -27,21 +27,23 @@ class BatchAdmin(admin.ModelAdmin):
 
 @admin.register(models.Faculty)
 class FaculyAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'department']
+    list_display = ['first_name', 'last_name', 'department', 'role']
     search_fields = ['first_name', 'last_name']
+    list_select_related = ['department', 'role']
 
 
 @admin.register(models.Request)
 class RequestAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest):
-        return super().get_queryset(request).prefetch_related('positions')
+        return models.Request.objects.prefetch_related('positions').all()
 
-    list_display = ['header', 'body', 'issued_by', 'issued_to', 'status']
+    list_display = ['header', 'body', 'issued_by',
+                    'issued_to', 'position']
     # list_select_related = ['issued_by', 'issued_to']
 
-    def status(self, request):
-        return request.positions.order_by('-created_time').first().get_status_display()
+    def status(self, positions):
+        return positions.order_by('-created_time').first().get_status_display()
 
     def position(self, request):
         return request.positions.order_by('-created_time').first().faculty.role
