@@ -36,17 +36,17 @@ class FaculyAdmin(admin.ModelAdmin):
 class RequestAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest):
-        return models.Request.objects.prefetch_related('positions').all()
+        return models.Request.objects.select_related('issued_by', 'issued_to', 'current_position__position__faculty__role').all()
 
-    list_display = ['header', 'body', 'issued_by',
-                    'issued_to', 'position']
+    list_display = ['id', 'header', 'body', 'issued_by',
+                    'issued_to', 'position', 'status']
     # list_select_related = ['issued_by', 'issued_to']
 
-    def status(self, positions):
-        return positions.order_by('-created_time').first().get_status_display()
+    def status(self, request):
+        return request.current_position.position.get_status_display()
 
     def position(self, request):
-        return request.positions.order_by('-created_time').first().faculty.role
+        return request.current_position.position.faculty.role
 
 
 @admin.register(models.Position)
