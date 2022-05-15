@@ -6,7 +6,8 @@ from django.urls import include, path
 from rest_framework_nested import routers
 
 router = routers.DefaultRouter()
-router.register('requests', views.RequestViewSet, basename='requests')
+router.register('requests', views.RequestViewSet,
+                basename='requests')
 router.register('faculty/requests', views.FacultyRequestViewSet,
                 basename='faculty-requests')
 router.register('student/requests', views.StudentRequestViewSet,

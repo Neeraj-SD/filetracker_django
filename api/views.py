@@ -3,8 +3,9 @@ from pprint import pprint
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
-from .serializers import CreatePositionSerializer, CreateRequestSerializer, FacultyRequestSerializer, PositionSerializer, RequestForwardSerializer, RequestSerializer, RequestActionSerializer
+from .serializers import CreatePositionSerializer, CreateRequestSerializer, FacultyRequestSerializer, HistorySerializer, PositionSerializer, RequestForwardSerializer, RequestSerializer, RequestActionSerializer
 from .models import CurrentPosition, Faculty, Position, Request
 # Create your views here.
 
@@ -20,6 +21,14 @@ class RequestViewSet(ModelViewSet):
             'positions__faculty__role', 'positions__faculty__department'
         ) \
         .all()
+
+    @action(detail=True, methods=['get'])
+    def history(self, request, pk):
+
+        positions = Position.objects.filter(
+            request_id=pk).order_by('-created_time').all()
+        serializer = PositionSerializer(positions, many=True)
+        return Response(serializer.data)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

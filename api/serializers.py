@@ -114,3 +114,10 @@ class FacultyRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
         fields = ['request']
+
+
+class HistorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Position
+        fields = '__ALL__'

@@ -53,6 +53,7 @@ class RequestAdmin(admin.ModelAdmin):
 class PositionAdmin(admin.ModelAdmin):
     list_display = ['request', 'faculty', 'status', 'created_time', 'remarks']
     autocomplete_fields = ['faculty']
+    search_fields = ['request__id']
 
 
 @admin.register(models.Role)
