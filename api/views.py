@@ -3,12 +3,18 @@ from pprint import pprint
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+from filetracker_django.settings import AUTH_USER_MODEL
 
 from .serializers import CreatePositionSerializer, CreateRequestSerializer, FacultyRequestSerializer, HistorySerializer, PositionSerializer, RequestForwardSerializer, RequestSerializer, RequestActionSerializer
 from .models import CurrentPosition, Faculty, Position, Request
 # Create your views here.
 
+# class UserViewSet(ModelViewSet):
+#     queryset = Request.objects.all()
+#     serializer_class
 
 class RequestViewSet(ModelViewSet):
     queryset = Request.objects \
@@ -107,6 +113,7 @@ class RequestActionViewSet(CreateModelMixin, GenericViewSet):
             return Response(serializer.data)
 
 
+@permission_classes([IsAuthenticated])
 class FacultyRequestViewSet(ModelViewSet):
     serializer_class = FacultyRequestSerializer
 
@@ -115,6 +122,13 @@ class FacultyRequestViewSet(ModelViewSet):
         .prefetch_related('request__positions') \
         .order_by('-created_time') \
         .all()
+
+    # @permission_classes([IsAuthenticated])
+    @action(detail=False)
+    def me(self, request):
+        # if request.per
+        print(request.user)
+        return Response(request.user.id)        
 
 
 class StudentRequestViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):

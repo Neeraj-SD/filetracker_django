@@ -38,10 +38,10 @@ class Role(models.Model):
 class Student(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    email = models.EmailField()
-    department = models.ForeignKey(Department, on_delete=models.PROTECT)
+    # email = models.EmailField()
+    department = models.ForeignKey(Department, on_delete=models.PROTECT,null=True)
     phone_number = models.CharField(max_length=255)
-    batch = models.ForeignKey(Batch, on_delete=models.PROTECT)
+    batch = models.ForeignKey(Batch, on_delete=models.PROTECT, null=True)
     admission_number = models.CharField(max_length=255)
     register_number = models.CharField(max_length=255)
     user = models.OneToOneField(
@@ -57,11 +57,13 @@ class Student(models.Model):
 class Faculty(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    email = models.EmailField()
-    department = models.ForeignKey(Department, on_delete=models.PROTECT)
+    # email = models.EmailField()
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, null=True)
     phone_number = models.CharField(max_length=255)
     role = models.ForeignKey(
         Role, on_delete=models.PROTECT, null=True, blank=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)    
 
     def name(self) -> str:
         return f'{self.first_name} {self.last_name}'

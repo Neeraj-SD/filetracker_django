@@ -8,7 +8,7 @@ from . import models
 
 @admin.register(models.Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'department', 'batch']
+    list_display = ['user','first_name', 'last_name', 'department', 'batch']
     autocomplete_fields = ['department', 'batch']
     # search_fields = ['department', 'batch']
 
@@ -27,7 +27,7 @@ class BatchAdmin(admin.ModelAdmin):
 
 @admin.register(models.Faculty)
 class FaculyAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'department', 'role']
+    list_display = ['user','first_name', 'last_name', 'department', 'role']
     search_fields = ['first_name', 'last_name']
     list_select_related = ['department', 'role']
 

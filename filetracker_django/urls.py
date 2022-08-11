@@ -16,15 +16,26 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from rest_framework_simplejwt.views import TokenVerifyView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
 admin.site.site_header = 'FileTracker Admin'
 admin.site.index_title = 'Admin'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('core.urls')),
+    path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
+    path(
+        'api/docs/',
+        SpectacularSwaggerView.as_view(url_name='api-schema'),
+        name='api-docs',
+        ),
     path('api/', include('api.urls')),
     path('__debug__/', include('debug_toolbar.urls')),
     path('accounts/', include('allauth.urls')),
+
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     # path('api/', include('a.urls')),
 
 ]
