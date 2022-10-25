@@ -15,5 +15,5 @@ def create_student_or_faculty_for_new_user(sender, **kwargs):
         # user = settings.AUTH_USER_MODEL.objects.find()
         if user.is_faculty:
             Faculty.objects.create(user=user_id)
-        else:
-            Student.objects.create(user=user_id)
+        elif user.is_student: 
+                Student.objects.create(user=user_id)

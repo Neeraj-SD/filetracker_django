@@ -15,7 +15,7 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(models.Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ['name']
+    list_display = ['name', ]
     search_fields = ['name']
 
 
@@ -29,14 +29,14 @@ class BatchAdmin(admin.ModelAdmin):
 class FaculyAdmin(admin.ModelAdmin):
     list_display = ['user','first_name', 'last_name', 'department', 'role']
     search_fields = ['first_name', 'last_name']
-    list_select_related = ['department', 'role']
+    list_select_related = ['department']
 
 
 @admin.register(models.Request)
 class RequestAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest):
-        return models.Request.objects.select_related('issued_by', 'issued_to', 'current_position__position__faculty__role').all()
+        return models.Request.objects.select_related('issued_by', 'issued_to').all()
 
     list_display = ['id', 'header', 'body', 'issued_by',
                     'issued_to', 'position', 'status']
@@ -56,6 +56,6 @@ class PositionAdmin(admin.ModelAdmin):
     search_fields = ['request__id']
 
 
-@admin.register(models.Role)
-class RoleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name']
+# @admin.register(models.Role)
+# class RoleAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'name']

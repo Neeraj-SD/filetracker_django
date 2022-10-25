@@ -1,5 +1,7 @@
 from http.client import BAD_REQUEST, NOT_FOUND
+from multiprocessing import context
 from pprint import pprint
+import uuid
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.response import Response
@@ -17,16 +19,18 @@ from .models import CurrentPosition, Faculty, Position, Request
 #     serializer_class
 
 class RequestViewSet(ModelViewSet):
-    queryset = Request.objects \
-        .select_related(
-            'issued_to__department', 'issued_to__role', 'issued_to',
-            'issued_by', 'current_position__position__faculty__department',
-            'current_position__position__faculty__role'
-        ) \
-        .prefetch_related(
-            'positions__faculty__role', 'positions__faculty__department'
-        ) \
-        .all()
+    # queryset = Request.objects \
+    #     .filter(issued_by__user=)
+    #     .select_related(
+    #         'issued_to__department', 'issued_to',
+    #         'issued_by', 'current_position__position__faculty__department',
+    #     ) \
+    #     .prefetch_related(
+    #          'positions__faculty__department'
+    #     ) \
+    #     .all()
+    
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk):
@@ -36,20 +40,42 @@ class RequestViewSet(ModelViewSet):
         serializer = PositionSerializer(positions, many=True)
         return Response(serializer.data)
 
+    def get_queryset(self):
+        queryset = Request.objects \
+                                .filter(issued_by__user=self.request.user.id) \
+                                .select_related(
+                                    'issued_to__department', 'issued_to',
+                                    'issued_by', 'current_position__position__faculty__department',
+                                ) \
+                                .prefetch_related(
+                                    'positions__faculty__department'
+                                ) \
+                                .all() 
+        return queryset
+
     def get_serializer_class(self):
+        # if self.request.method == 'GET':
+        #     print(self.request.user.id)
         if self.request.method == 'POST':
             return CreateRequestSerializer
         return RequestSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = CreateRequestSerializer(data=request.data)
+        serializer = CreateRequestSerializer(data=request.data, context = {'request': request})
         serializer.is_valid(raise_exception=True)
         request = serializer.save()
 
         return Response(serializer.data)
 
+def validate_uuid(uuid):
+    try:
+            print(uuid.UUID(uuid, version=4))
+            return True
+    except:
+        return False
 
 class RequestActionViewSet(CreateModelMixin, GenericViewSet):
+    lookup_field = 'uuid'
     http_method_names = ['post']
 
     def get_serializer_class(self):
@@ -61,17 +87,25 @@ class RequestActionViewSet(CreateModelMixin, GenericViewSet):
 
     # queryset = Position.objects.all()
 
+
     def create(self, request, *args, **kwargs):
         print(request.path)
 
         action = request.path.split("/")[-2]
 
-        request_id = self.kwargs['request_pk']
+        
+        if not validate_uuid(self.kwargs['request_pk']):
+           return Response('Invalid request id.')
+
+        request_uid = uuid.UUID(self.kwargs['request_pk'])
 
         # request = Request.objects.ge
+        request = Request.objects.get(uuid=request_uid)
+
+
 
         position = Position.objects \
-            .filter(request_id=request_id) \
+            .filter(request_id=request.id) \
             .order_by('-created_time') \
             .first()
         if position is None:
@@ -104,9 +138,9 @@ class RequestActionViewSet(CreateModelMixin, GenericViewSet):
             position.save()
 
             position = Position.objects.create(
-                faculty=faculty.get(), request_id=request_id)
+                faculty=faculty.get(), request_id=request.id)
 
-            CurrentPosition.objects.filter(request_id=request_id).update(
+            CurrentPosition.objects.filter(request_id=request.id).update(
                 position=position)
 
             serializer = RequestForwardSerializer(position)
@@ -117,18 +151,16 @@ class RequestActionViewSet(CreateModelMixin, GenericViewSet):
 class FacultyRequestViewSet(ModelViewSet):
     serializer_class = FacultyRequestSerializer
 
-    queryset = Position.objects.filter(faculty=1).select_related(
+    request_classes = ['GET']    
+    
+    def get_queryset(self):
+        queryset = Position.objects.filter(faculty__user=self.request.user.id).select_related(
         'request', 'request__issued_to', 'request__issued_by') \
         .prefetch_related('request__positions') \
         .order_by('-created_time') \
         .all()
-
-    # @permission_classes([IsAuthenticated])
-    @action(detail=False)
-    def me(self, request):
-        # if request.per
-        print(request.user)
-        return Response(request.user.id)        
+        return queryset   
+    
 
 
 class StudentRequestViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
@@ -136,9 +168,15 @@ class StudentRequestViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     http_methods = ['get']
 
-    queryset = Request.objects.select_related(
-        'issued_to__department', 'issued_to__role', 'issued_to',
-        'issued_by', 'current_position__position__faculty__department',
-        'current_position__position__faculty__role') \
-        .prefetch_related('positions__faculty__role', 'positions__faculty__department') \
-        .all()
+    def get_queryset(self):
+        return  Request.objects \
+                                .filter(issued_by__user=self.request.user.id) \
+                                .select_related \
+                                ( 
+                                'issued_to__department',  'issued_to',
+                                'issued_by', 'current_position__position__faculty__department',
+                                ) \
+                                .prefetch_related( 'positions__faculty__department') \
+                                .all()
+
+

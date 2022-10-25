@@ -1,6 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
-from .models import CurrentPosition, Department, Faculty, Position, Request, Role, Student
+from .models import CurrentPosition, Department, Faculty, Position, Request,  Student
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -9,15 +9,15 @@ class DepartmentSerializer(serializers.ModelSerializer):
         fields = ['name']
 
 
-class RoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Role
-        fields = ['name']
+# class RoleSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Role
+#         fields = ['name']
 
 
 class FacultySerializer(serializers.ModelSerializer):
     department = DepartmentSerializer()
-    role = RoleSerializer()
+    # role = RoleSerializer()
 
     class Meta:
         model = Faculty
@@ -65,24 +65,25 @@ class RequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Request
-        fields = ['id', 'header', 'body', 'created_time',
+        fields = ['id', 'uuid','header', 'body', 'created_time',
                   'issued_by', 'issued_to', 'current_position', 'history']
 
 
 class CreateRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
-        fields = ['header', 'body', 'issued_by', 'issued_to']
+        fields = ['header', 'body', 'issued_to']
 
     def save(self, **kwargs):
         with transaction.atomic():
-            issued_by = self.validated_data['issued_by']
+            print(self.context.get("request"))
+            issued_by = self.context['request'].user
             issued_to = self.validated_data['issued_to']
             header = self.validated_data['header']
             body = self.validated_data['body']
 
             faculty = Faculty.objects.get(pk=issued_to.id)
-            student = Student.objects.get(pk=issued_by.id)
+            student = Student.objects.get(user=issued_by.id)
             request = Request.objects.create(
                 issued_by=student, issued_to=faculty, header=header, body=body)
 
